@@ -1,13 +1,20 @@
 package TestSSL;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 
 import java.net.URL;
@@ -132,10 +139,10 @@ public class TestSSL {
         System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
         System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
 
-    	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.csv";
+    	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.txt";
     	BufferedReader br = null;
     	String line = "";
-    	String csvSplitBy = ",";
+    	String csvSplitBy = "\t";
     	
     	Integer i = 0;
     	String name = "";
@@ -171,6 +178,10 @@ public class TestSSL {
     				name = station[0].substring(0, station[0].length()-1);
     	    		address = station[1].substring(0, station[1].length()-1);
     	    		
+    	    		if (address.indexOf("\"") == 0) {
+    	    			address = address.substring(1, address.length()-1);
+    	    		}
+    	    		
     	    		if (station[2].length() > 0){
     	    				telephoneNumber = station[2].substring(1, station[2].length()-1);
     	    		}
@@ -185,10 +196,10 @@ public class TestSSL {
     	    		
 					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
 
-    				System.out.println(i+"[name= " + name 
-    						+ " , address=" + address
-    						+ " , addressForGoogle=" + addressForGoogle
-    						+ "("+latitude+","+longitude+")"
+    				System.out.println(i+"[name<" + name 
+    						+ ">address<" + address
+    						+ ">addressForGoogle=" + addressForGoogle
+    						+ ">("+latitude+","+longitude+")"
     						+ "]");
     				
     				if (i == 1) {
@@ -212,23 +223,28 @@ public class TestSSL {
     		companyJson.put("Stations", stationArray);
     			
     		//System.setProperty("file.encoding", "MS950");
-    		System.setProperty("file.encoding", "x-windows-950");
+    		//System.setProperty("file.encoding", "x-windows-950");
+    		System.setProperty("file.encoding", "UTF-8");
     			
     		defaultCharacterEncoding = System.getProperty("file.encoding");
     		System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
     		System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
     		System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
     		
-    		FileWriter file = new FileWriter("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json");
-    		file.write(companyJson.toString());
-    		
-    		System.out.println("defaultCharacterEncoding by file: " + file.getEncoding());
+    		File file = new File("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json");
+    		Writer out = new BufferedWriter(new OutputStreamWriter(
+    				new FileOutputStream(file), "UTF8"));
+    	 
+    		out.append(companyJson.toString()).append("\r\n");
 
+    		
+    		//file.write(companyJson.toString());
+    		
     		
     		//System.out.println("Successfully Copied JSON Object to File...");
     		System.out.println("\nJSON Object: " + companyJson);
-    		file.flush();
-    		file.close();
+    		out.flush();
+    		out.close();
     	        
     		
      
