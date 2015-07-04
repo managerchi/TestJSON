@@ -22,6 +22,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class TestSSL {
+	static Double latitude;
+	static Double longitude;
 
     public static void main(String[] args) throws Exception {
         // Create a trust manager that does not validate certificate chains
@@ -49,55 +51,32 @@ public class TestSSL {
         HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
         
-        final String ADDRESS_START = "<TD class=\"green-W9\">";
-        final String ADDRESS_END = "</TD>";
-        String address;
-
-        BufferedReader br = null;
         
-		try {
- 
-			String line;
- 
-			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\台灣聯通停車場開發股份有限公司.htm"));
- 
-			while ((line = br.readLine()) != null) {
-				if (line.contains(ADDRESS_START)) {
-					System.out.println(line);
-					System.out.println(ADDRESS_START.length());
-					
-					if (line.contains(ADDRESS_END)) {
-						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
-					}
-					else {
-						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
-					}
-					System.out.println("address("+address+")");
-
-				}
-			}
- 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (br != null)br.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		}
-
+		//parseTaiwanParkingAddresses();
+		parseDoDoHomeAddresses();
         
-        
-        //URL url = new URL("https://www.google.com");
+
+    } // End of main 
+
+    
+    
+    static private void getLatitudeLongitude(String address)
+            throws Exception {
+    	
+    	String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
+    	
+        System.out.println(urlStr);
+
+    	
+    	//URL url = new URL("https://www.google.com");
         //URL url = new URL("https://maps.googleapis.com/maps/api/geocode/xml?address=%E9%81%94%E8%A7%80%E8%B7%AF+41");
-        URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?address=%E9%81%94%E8%A7%80%E8%B7%AF+41");
+        URL url = new URL(urlStr);
         //URL url = new URL("http://api.openweathermap.org/data/2.5/weather?q=London,uk");
         //URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=10280&mode=json&units=metric&cnt=14");
         
         URLConnection con = url.openConnection();
         final Reader reader = new InputStreamReader(con.getInputStream());
-        br = new BufferedReader(reader);        
+        BufferedReader br = new BufferedReader(reader);        
         String line = "";
         StringBuffer buffer = new StringBuffer();
 
@@ -116,9 +95,164 @@ public class TestSSL {
         getGeocodeFromJson(jsonStr);
         //getWeatherDataFromJson(jsonStr);
 
+    }
+    
+    static private void parseDoDoHomeAddresses()
+            throws Exception {
+        
+    	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.csv";
+    	BufferedReader br = null;
+    	String line = "";
+    	String csvSplitBy = ",";
+    	
+    	Integer i = 0;
+    	String name = "";
+    	String address = "";
+    	String telephoneNumber = "";
+    	String comment = "";
+    	String types = "";
+    	
+    	String addressForGoogle = "";
+        final String ADDRESS_NUMBER = "號";
 
-    } // End of main 
+    	try {
+     
+    		br = new BufferedReader(new FileReader(csvFile));
+    		line = br.readLine();
+    		while ((line = br.readLine()) != null) {
+     
+    		        // use comma as separator
+    			String[] station = line.split(csvSplitBy);
+    			
+    			for (String s:station) {
+    				   System.out.println(s);
+    			}
+     
+    			if (station[0].length() > 0) {
+    				i++;
+    				
+    				name = station[0].substring(0, station[0].length()-1);
+    	    		address = station[1].substring(1, station[1].length()-1);
+    	    		
+    	    		if (station[2].length() > 0){
+    	    				telephoneNumber = station[2].substring(1, station[2].length()-1);
+    	    		}
+    	    		
+    	    		comment = station[3].substring(1, station[3].length()-1);
+    	    		types = station[4].substring(1, station[4].length()-1);
+    	    		
+    	    		if (station.length == 7) {
+    	    			latitude = Double.parseDouble(station[5].substring(1, station[5].length()-1));
+    	    			longitude = Double.parseDouble(station[6].substring(1, station[6].length()-1));
+    	    		}
+    	    		
+					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
 
+    				System.out.println(i+"[name= " + name 
+    						+ " , address=" + address
+    						+ " , addressForGoogle=" + addressForGoogle
+    						+ "("+latitude+","+longitude+")"
+    						+ "]");
+    				
+
+    				
+    			}
+    		}
+     
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	} finally {
+    		if (br != null) {
+    			try {
+    				br.close();
+    			} catch (IOException e) {
+    				e.printStackTrace();
+    			}
+    		}
+    	}
+     
+    	System.out.println("Done");
+
+    }
+    
+    static private void parseTaiwanParkingAddresses()
+                throws Exception {
+
+    	final String NAME_START = "src=\"\" hspace=\"5\">";
+        final String NAME_END = "</A></TD>";
+        final String NAME_BEFORE = "\')\">";
+        String name = "";
+        
+        final String ADDRESS_START = "<TD class=\"green-W9\">";
+        final String ADDRESS_END = "</TD>";
+        final String ADDRESS_NUMBER = "號";
+        String address = "";
+        String addressForGoogle = "";
+        
+		Integer i = 0;
+
+        BufferedReader br = null;
+        
+		try {
+ 
+			String line;
+ 
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\台灣聯通停車場開發股份有限公司.htm"));
+ 
+			while ((line = br.readLine()) != null) {
+
+				if (line.contains(NAME_START)) {
+					//System.out.println(line);
+					//System.out.println(ADDRESS_START.length());
+					
+					if (line.contains(NAME_END)) {
+						name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length(), line.indexOf(NAME_END));
+					}
+					else {
+						name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length());
+					}
+					
+					//System.out.println(i+"("+name+")");
+					
+				}
+				
+				if (line.contains(ADDRESS_START)) {
+					//System.out.println(line);
+					//System.out.println(ADDRESS_START.length());
+					
+					if (line.contains(ADDRESS_END)) {
+						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+					}
+					else {
+						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
+					}
+					
+					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
+					i++;
+
+					//System.out.println(i+"("+address+")");
+					if (i == 1) {
+						getLatitudeLongitude(addressForGoogle);
+	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
+
+					}
+				}
+			}
+ 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null) {
+					br.close();
+					System.out.println(i);
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+    }
     
     
     static private void getGeocodeFromJson(String jsonStr)
@@ -171,7 +305,11 @@ public class TestSSL {
                     
                     System.out.println("("+locationLatitude+","+locationLongitude+")");
 
+                    latitude = locationLatitude;
+                    longitude = locationLongitude;
                     
+                    String formattedAddress = resultJson.getString(FORMATTED_ADDRESS);
+                    System.out.println("formattedAddress"+formattedAddress);
                     String placeID = resultJson.getString(PLACE_ID);
                     System.out.println(placeID);
 
