@@ -1,6 +1,8 @@
 package TestSSL;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
@@ -46,6 +48,47 @@ public class TestSSL {
         // Install the all-trusting host verifier
         HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
+        
+        final String ADDRESS_START = "<TD class=\"green-W9\">";
+        final String ADDRESS_END = "</TD>";
+        String address;
+
+        BufferedReader br = null;
+        
+		try {
+ 
+			String line;
+ 
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\台灣聯通停車場開發股份有限公司.htm"));
+ 
+			while ((line = br.readLine()) != null) {
+				if (line.contains(ADDRESS_START)) {
+					System.out.println(line);
+					System.out.println(ADDRESS_START.length());
+					
+					if (line.contains(ADDRESS_END)) {
+						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+					}
+					else {
+						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
+					}
+					System.out.println("address("+address+")");
+
+				}
+			}
+ 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null)br.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+        
+        
         //URL url = new URL("https://www.google.com");
         //URL url = new URL("https://maps.googleapis.com/maps/api/geocode/xml?address=%E9%81%94%E8%A7%80%E8%B7%AF+41");
         URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?address=%E9%81%94%E8%A7%80%E8%B7%AF+41");
@@ -54,7 +97,7 @@ public class TestSSL {
         
         URLConnection con = url.openConnection();
         final Reader reader = new InputStreamReader(con.getInputStream());
-        final BufferedReader br = new BufferedReader(reader);        
+        br = new BufferedReader(reader);        
         String line = "";
         StringBuffer buffer = new StringBuffer();
 
