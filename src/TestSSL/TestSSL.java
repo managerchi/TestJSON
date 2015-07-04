@@ -35,9 +35,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+
+
 public class TestSSL {
 	static Double latitude;
 	static Double longitude;
+	
+	static String status;
+	
+	static JSONObject companyJson = new JSONObject();
+	static JSONArray stationArray = new JSONArray();
+    //JSONObject stationJson = new JSONObject();
+	static HashMap<String, Object> stationMap = new HashMap<String, Object>();
+
 
     public static void main(String[] args) throws Exception {
         // Create a trust manager that does not validate certificate chains
@@ -67,21 +78,21 @@ public class TestSSL {
         
         
 		//parseTaiwanParkingAddresses();
-		parseDoDoHomeAddresses();
-		//parse24TPSAddresses();
+		//parseDoDoHomeAddresses();
+		parse24TPSAddresses();
         
 
     } // End of main 
 
     
-    
-    static private void getLatitudeLongitude(String address)
+    static private String httpCall(String address)
             throws Exception {
     	
     	String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
     	
         System.out.println(urlStr);
 
+        //Thread.sleep (100);
     	
     	//URL url = new URL("https://www.google.com");
         //URL url = new URL("https://maps.googleapis.com/maps/api/geocode/xml?address=%E9%81%94%E8%A7%80%E8%B7%AF+41");
@@ -105,9 +116,32 @@ public class TestSSL {
         String jsonStr = null;
 
         jsonStr = buffer.toString();
-        //System.out.println(jsonStr);
+        
+        return jsonStr;
+        
+
+    }
+    
+    static private void getLatitudeLongitude(String address)
+            throws Exception {
+    	
+    	
+    	
+        String jsonStr = httpCall(address);
+        //System.out.println("jsonStr<"+jsonStr+">");
 
         getGeocodeFromJson(jsonStr);
+        
+        while (status.equals("OVER_QUERY_LIMIT")) {
+        	Thread.sleep (1000);
+        	
+        	jsonStr = httpCall(address);
+            getGeocodeFromJson(jsonStr);
+        	
+        }
+        
+        System.out.println("status="+status);
+
         //getWeatherDataFromJson(jsonStr);
 
     }
@@ -120,6 +154,68 @@ public class TestSSL {
         InputStreamReader reader = new InputStreamReader(is);
         String defaultCharacterEncoding = reader.getEncoding();
         return defaultCharacterEncoding;
+    }
+
+    
+    
+    static private void addStationToArray(String name, String address, Double stationLatitude, Double stationLongitude)
+            throws Exception {
+    
+    	stationMap.put("Name", name);
+        stationMap.put("Address", address);
+        stationMap.put("Latitude", stationLatitude);
+        stationMap.put("Longitude", stationLongitude);
+       
+        stationArray.put(stationMap);
+    }
+    
+    
+    
+    static private void outputJSON(String fileName, JSONObject stations)
+            throws Exception {
+        
+    	
+    	try {
+         			
+    		//System.setProperty("file.encoding", "MS950");
+    		//System.setProperty("file.encoding", "x-windows-950");
+    		System.setProperty("file.encoding", "UTF-8");
+    			
+    		String defaultCharacterEncoding = System.getProperty("file.encoding");
+    		System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
+    		System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
+    		System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
+    		
+    		File file = new File(fileName);
+    		Writer out = new BufferedWriter(new OutputStreamWriter(
+    				new FileOutputStream(file), "UTF8"));
+    	 
+    		out.append(stations.toString()).append("\r\n");
+
+    		
+    		//file.write(companyJson.toString());
+    		
+    		
+    		//System.out.println("Successfully Copied JSON Object to File...");
+    		System.out.println("\nJSON Object: " + stations);
+    		out.flush();
+    		out.close();
+    		
+    		companyJson = new JSONObject();
+    	    stationArray = new JSONArray();
+    	    //JSONObject stationJson = new JSONObject();
+    	    stationMap = new HashMap<String, Object>();
+    	        
+    		
+     
+    	} 
+    	catch (IOException e) {
+    		e.printStackTrace();
+    	} 
+    	
+     
+    	System.out.println("Done");
+
     }
 
     
@@ -154,16 +250,27 @@ public class TestSSL {
     	String addressForGoogle = "";
         final String ADDRESS_NUMBER = "號";
         
-        JSONObject companyJson = new JSONObject();
-        JSONArray stationArray = new JSONArray();
+        //JSONObject companyJson = new JSONObject();
+        //JSONArray stationArray = new JSONArray();
         //JSONObject stationJson = new JSONObject();
-        HashMap<String, Object> stationMap = new HashMap<String, Object>();
+        //HashMap<String, Object> stationMap = new HashMap<String, Object>();
+        
+        File file = new File("E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.txt");
+        BufferedReader in = new BufferedReader(
+        					new InputStreamReader(
+        					new FileInputStream(file), "x-windows-950"));
+		
+		//File fileDir = new File("c:\\temp\\test.txt");
+		//BufferedReader in = new BufferedReader(
+		//		   new InputStreamReader(
+		//                      new FileInputStream(fileDir), "UTF8"));
+		 
 
     	try {
      
-    		br = new BufferedReader(new FileReader(csvFile));
-    		line = br.readLine();
-    		while ((line = br.readLine()) != null) {
+    		//br = new BufferedReader(new FileReader(csvFile));
+    		line = in.readLine();
+    		while ((line = in.readLine()) != null) {
      
     		        // use comma as separators
     			String[] station = line.split(csvSplitBy);
@@ -209,13 +316,14 @@ public class TestSSL {
 	                   
 					}
     				
-    				stationMap.put("Name", name);
-    		        stationMap.put("Address", address);
-    		        stationMap.put("Latitude", latitude);
-    		        stationMap.put("Longitude", longitude);
+    				//stationMap.put("Name", name);
+    		        //stationMap.put("Address", address);
+    		        //stationMap.put("Latitude", latitude);
+    		        //stationMap.put("Longitude", longitude);
     		        
-    		        stationArray.put(stationMap);
+    		        //stationArray.put(stationMap);
 
+    		        addStationToArray(name, address, latitude, longitude);
     				
     			}
     		}
@@ -224,27 +332,9 @@ public class TestSSL {
     			
     		//System.setProperty("file.encoding", "MS950");
     		//System.setProperty("file.encoding", "x-windows-950");
-    		System.setProperty("file.encoding", "UTF-8");
-    			
-    		defaultCharacterEncoding = System.getProperty("file.encoding");
-    		System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
-    		System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
-    		System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
-    		
-    		File file = new File("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json");
-    		Writer out = new BufferedWriter(new OutputStreamWriter(
-    				new FileOutputStream(file), "UTF8"));
-    	 
-    		out.append(companyJson.toString()).append("\r\n");
-
-    		
-    		//file.write(companyJson.toString());
-    		
-    		
-    		//System.out.println("Successfully Copied JSON Object to File...");
-    		System.out.println("\nJSON Object: " + companyJson);
-    		out.flush();
-    		out.close();
+    		//System.setProperty("file.encoding", "UTF-8");
+    			  		
+    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json", companyJson);
     	        
     		
      
@@ -287,9 +377,11 @@ public class TestSSL {
         final String ADDRESS_START = "<TD>";
         final String ADDRESS_END = "</TD>";
         final String ADDRESS_NUMBER = "號";
+        final String ADDRESS_NUMBER_DASH = "之";
         String address = "";
         String addressForGoogle = "";
         
+       
 		Integer i = 0;
 
         BufferedReader br = null;
@@ -326,6 +418,9 @@ public class TestSSL {
 							//System.out.println(line);
 							//System.out.println(ADDRESS_START.length());
 							
+							address = "";
+							addressForGoogle = "";
+							
 							if (line.contains(ADDRESS_END)) {
 								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
 							}
@@ -333,16 +428,28 @@ public class TestSSL {
 								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
 							}
 							
-							addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
-
+							if (address.indexOf(ADDRESS_NUMBER) > 0) {
+								addressForGoogle = address.substring(address.indexOf(" ")+1, address.indexOf(ADDRESS_NUMBER)+1);
+							}
+							else if (address.indexOf(ADDRESS_NUMBER_DASH) > 0){
+								addressForGoogle = address.substring(address.indexOf(" ")+1, address.indexOf(ADDRESS_NUMBER_DASH));
+								
+							}
+							else {
+								addressForGoogle = address;
+								
+							}
+							
 							System.out.println(i+"<"+address+">"+"<"+addressForGoogle+">");
 							
-							if (i == 3) {
+							//if (i % 2 == 1) {
 								getLatitudeLongitude(addressForGoogle);
 			                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
 
-							}
+							//}
 							
+							addStationToArray(name, address, latitude, longitude);
+
 							line = br.readLine();
 						}
 						
@@ -353,6 +460,11 @@ public class TestSSL {
 				
 				
 			}
+			
+			companyJson.put("Stations", stationArray);
+
+    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\24TPS.json", companyJson);
+
  
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -393,6 +505,12 @@ public class TestSSL {
 		Integer i = 0;
 
         BufferedReader br = null;
+        
+        //JSONObject companyJson = new JSONObject();
+        //JSONArray stationArray = new JSONArray();
+        //JSONObject stationJson = new JSONObject();
+        //HashMap<String, Object> stationMap = new HashMap<String, Object>();
+
         
 		try {
  
@@ -439,8 +557,17 @@ public class TestSSL {
 	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
 
 					}
+					
+					addStationToArray(name, address, latitude, longitude);
+
 				}
+				
 			}
+			
+    		companyJson.put("Stations", stationArray);
+
+    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\TaiwanParking.json", companyJson);
+
  
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -492,8 +619,11 @@ public class TestSSL {
 
             JSONObject geocodeJson = new JSONObject(jsonStr);
             JSONArray resultsArray = geocodeJson.getJSONArray(RESULTS);
-            String status = geocodeJson.getString(STATUS);
+            status = geocodeJson.getString(STATUS);
             System.out.println(status);
+            
+            latitude = 0.0;
+            longitude = 0.0;
 
             if (status.equals("OK")) {
             	//for(int i = 0; i < resultsArray.length(); i++) {
@@ -511,6 +641,9 @@ public class TestSSL {
 
                     latitude = locationLatitude;
                     longitude = locationLongitude;
+                    
+                    
+                    
                     
                     String formattedAddress = resultJson.getString(FORMATTED_ADDRESS);
                     System.out.println("formattedAddress<"+formattedAddress+">");
@@ -547,6 +680,7 @@ public class TestSSL {
                     } // j
                 } // i
             }
+            
             
         } catch (JSONException e) {
             System.out.println(e.getMessage());
