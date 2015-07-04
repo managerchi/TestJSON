@@ -2,13 +2,20 @@ package TestSSL;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
+
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -53,8 +60,8 @@ public class TestSSL {
         
         
 		//parseTaiwanParkingAddresses();
-		//parseDoDoHomeAddresses();
-		parse24TPSAddresses();
+		parseDoDoHomeAddresses();
+		//parse24TPSAddresses();
         
 
     } // End of main 
@@ -97,13 +104,33 @@ public class TestSSL {
         //getWeatherDataFromJson(jsonStr);
 
     }
-        
     
+    
+        
+    public static String getDefaultCharEncoding(){
+        byte [] bArray = {'w'};
+        InputStream is = new ByteArrayInputStream(bArray);
+        InputStreamReader reader = new InputStreamReader(is);
+        String defaultCharacterEncoding = reader.getEncoding();
+        return defaultCharacterEncoding;
+    }
+
     
     static private void parseDoDoHomeAddresses()
             throws Exception {
         
+    	String defaultCharacterEncoding = System.getProperty("file.encoding");
+        System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
+        System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
+        System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
+
+
         System.setProperty("file.encoding", "UTF-8");
+
+        defaultCharacterEncoding = System.getProperty("file.encoding");
+        System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
+        System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
+        System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
 
     	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.csv";
     	BufferedReader br = null;
@@ -119,6 +146,11 @@ public class TestSSL {
     	
     	String addressForGoogle = "";
         final String ADDRESS_NUMBER = "號";
+        
+        JSONObject companyJson = new JSONObject();
+        JSONArray stationArray = new JSONArray();
+        //JSONObject stationJson = new JSONObject();
+        HashMap<String, Object> stationMap = new HashMap<String, Object>();
 
     	try {
      
@@ -126,7 +158,7 @@ public class TestSSL {
     		line = br.readLine();
     		while ((line = br.readLine()) != null) {
      
-    		        // use comma as separator
+    		        // use comma as separators
     			String[] station = line.split(csvSplitBy);
     			
     			for (String s:station) {
@@ -166,12 +198,45 @@ public class TestSSL {
 	                   
 					}
     				
+    				stationMap.put("Name", name);
+    		        stationMap.put("Address", address);
+    		        stationMap.put("Latitude", latitude);
+    		        stationMap.put("Longitude", longitude);
+    		        
+    		        stationArray.put(stationMap);
+
+    				
     			}
     		}
+    		
+    		companyJson.put("Stations", stationArray);
+    			
+    		//System.setProperty("file.encoding", "MS950");
+    		System.setProperty("file.encoding", "x-windows-950");
+    			
+    		defaultCharacterEncoding = System.getProperty("file.encoding");
+    		System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
+    		System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
+    		System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
+    		
+    		FileWriter file = new FileWriter("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json");
+    		file.write(companyJson.toString());
+    		
+    		System.out.println("defaultCharacterEncoding by file: " + file.getEncoding());
+
+    		
+    		//System.out.println("Successfully Copied JSON Object to File...");
+    		System.out.println("\nJSON Object: " + companyJson);
+    		file.flush();
+    		file.close();
+    	        
+    		
      
-    	} catch (IOException e) {
+    	} 
+    	catch (IOException e) {
     		e.printStackTrace();
-    	} finally {
+    	} 
+    	finally {
     		if (br != null) {
     			try {
     				br.close();
