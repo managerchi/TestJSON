@@ -53,7 +53,8 @@ public class TestSSL {
         
         
 		//parseTaiwanParkingAddresses();
-		parseDoDoHomeAddresses();
+		//parseDoDoHomeAddresses();
+		parse24TPSAddresses();
         
 
     } // End of main 
@@ -96,10 +97,14 @@ public class TestSSL {
         //getWeatherDataFromJson(jsonStr);
 
     }
+        
+    
     
     static private void parseDoDoHomeAddresses()
             throws Exception {
         
+        System.setProperty("file.encoding", "UTF-8");
+
     	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.csv";
     	BufferedReader br = null;
     	String line = "";
@@ -132,7 +137,7 @@ public class TestSSL {
     				i++;
     				
     				name = station[0].substring(0, station[0].length()-1);
-    	    		address = station[1].substring(1, station[1].length()-1);
+    	    		address = station[1].substring(0, station[1].length()-1);
     	    		
     	    		if (station[2].length() > 0){
     	    				telephoneNumber = station[2].substring(1, station[2].length()-1);
@@ -142,8 +147,8 @@ public class TestSSL {
     	    		types = station[4].substring(1, station[4].length()-1);
     	    		
     	    		if (station.length == 7) {
-    	    			latitude = Double.parseDouble(station[5].substring(1, station[5].length()-1));
-    	    			longitude = Double.parseDouble(station[6].substring(1, station[6].length()-1));
+    	    			longitude = Double.parseDouble(station[5].substring(0, station[5].length()-1));
+    	    			latitude = Double.parseDouble(station[6].substring(0, station[6].length()-1));
     	    		}
     	    		
 					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
@@ -154,7 +159,12 @@ public class TestSSL {
     						+ "("+latitude+","+longitude+")"
     						+ "]");
     				
+    				if (i == 1) {
+						getLatitudeLongitude(addressForGoogle);
+	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
 
+	                   
+					}
     				
     			}
     		}
@@ -175,9 +185,119 @@ public class TestSSL {
 
     }
     
+    
+    
+
+    
+    
+
+    static private void parse24TPSAddresses()
+            throws Exception {
+        
+        System.setProperty("file.encoding", "UTF-8");
+        
+        final String TABLE_START = "<TR></TR></TBODY></TABLE>";
+        
+        final String NAME_START = "<TD>";
+        final String NAME_END = "</TD>";
+        final String NAME_BEFORE = "<TD>";
+        String name = "";
+        
+        final String ADDRESS_START = "<TD>";
+        final String ADDRESS_END = "</TD>";
+        final String ADDRESS_NUMBER = "號";
+        String address = "";
+        String addressForGoogle = "";
+        
+		Integer i = 0;
+
+        BufferedReader br = null;
+        
+		try {
+ 
+			String line;
+ 
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\永固便利停車.htm"));
+ 
+			while ((line = br.readLine()) != null) {
+				if (line.contains(TABLE_START)) {
+					while ((line = br.readLine()) != null) {
+						if (line.contains(NAME_START)) {
+							//System.out.println(line);
+							//System.out.println(ADDRESS_START.length());
+							
+							if (line.contains(NAME_END)) {
+								name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length(), line.indexOf(NAME_END));
+							}
+							else {
+								name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length());
+							}
+							
+							i++;
+							
+							System.out.println(i+"("+name+")");
+							
+							line = br.readLine();
+							
+						}
+						
+						if (line.contains(ADDRESS_START)) {
+							//System.out.println(line);
+							//System.out.println(ADDRESS_START.length());
+							
+							if (line.contains(ADDRESS_END)) {
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+							}
+							else {
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
+							}
+							
+							addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
+
+							System.out.println(i+"<"+address+">"+"<"+addressForGoogle+">");
+							
+							if (i == 3) {
+								getLatitudeLongitude(addressForGoogle);
+			                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
+
+							}
+							
+							line = br.readLine();
+						}
+						
+					}
+					
+					
+				}
+				
+				
+			}
+ 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null) {
+					br.close();
+					System.out.println(i);
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+        
+
+        
+    }
+
+    
+    
     static private void parseTaiwanParkingAddresses()
                 throws Exception {
 
+        //System.setProperty("file.encoding", "UTF-16");
+        
     	final String NAME_START = "src=\"\" hspace=\"5\">";
         final String NAME_END = "</A></TD>";
         final String NAME_BEFORE = "\')\">";
@@ -231,6 +351,8 @@ public class TestSSL {
 					i++;
 
 					//System.out.println(i+"("+address+")");
+					//System.out.println(i+"("+addressForGoogle+")");
+					
 					if (i == 1) {
 						getLatitudeLongitude(addressForGoogle);
 	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
@@ -293,7 +415,8 @@ public class TestSSL {
             System.out.println(status);
 
             if (status.equals("OK")) {
-            	for(int i = 0; i < resultsArray.length(); i++) {
+            	//for(int i = 0; i < resultsArray.length(); i++) {
+                for(int i = 0; i < 1; i++) {
                     JSONObject resultJson = resultsArray.getJSONObject(i);
 
                     JSONArray addressArray = resultJson.getJSONArray(ADDRESS_COMPONENTS);
@@ -309,7 +432,7 @@ public class TestSSL {
                     longitude = locationLongitude;
                     
                     String formattedAddress = resultJson.getString(FORMATTED_ADDRESS);
-                    System.out.println("formattedAddress"+formattedAddress);
+                    System.out.println("formattedAddress<"+formattedAddress+">");
                     String placeID = resultJson.getString(PLACE_ID);
                     System.out.println(placeID);
 
