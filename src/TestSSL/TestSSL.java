@@ -80,7 +80,11 @@ public class TestSSL {
 		//parseTaiwanParkingAddresses();
 		//parseDoDoHomeAddresses();
 		parse24TPSAddresses();
-        
+		
+		//getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/TaiwanParking.json");
+		//getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/DoDoHome.json");
+		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/24TPS.json");
+	            
 
     } // End of main 
 
@@ -162,10 +166,10 @@ public class TestSSL {
     static private void addStationToArray(String name, String address, Double stationLatitude, Double stationLongitude)
             throws Exception {
     
-    	stationMap.put("Name", name);
-        stationMap.put("Address", address);
-        stationMap.put("Latitude", stationLatitude);
-        stationMap.put("Longitude", stationLongitude);
+    	stationMap.put("name", name);
+        stationMap.put("address", address);
+        stationMap.put("latitude", stationLatitude);
+        stationMap.put("longitude", stationLongitude);
        
         stationArray.put(stationMap);
     }
@@ -191,6 +195,7 @@ public class TestSSL {
     		Writer out = new BufferedWriter(new OutputStreamWriter(
     				new FileOutputStream(file), "UTF8"));
     	 
+
     		out.append(stations.toString()).append("\r\n");
 
     		
@@ -220,9 +225,32 @@ public class TestSSL {
     }
 
     
-    static private void parseDoDoHomeAddresses()
-            throws Exception {
+    static private String getAddressForGoogle(String address) {
+    	final String ADDRESS_NUMBER = "¸¹";
+        final String ADDRESS_NUMBER_OF = "¤§";
+        final String ADDRESS_NUMBER_DASH = "-";
+    	
+    	String addressForGoogle =address.replaceAll("\\s","");
+
+		if (addressForGoogle.indexOf(ADDRESS_NUMBER_OF) > 0) {
+			addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER_OF));
+		}
+		else if (addressForGoogle.indexOf(ADDRESS_NUMBER_DASH) > 0) {
+			addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER_DASH));
+		}
+		else if (addressForGoogle.indexOf(ADDRESS_NUMBER) > 0){
+			addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER)+1);
+			
+		}
+		
+		return addressForGoogle;
+    }
         
+    
+    
+    static private void parseDoDoHomeAddresses()
+    		throws Exception {
+            
     	String defaultCharacterEncoding = System.getProperty("file.encoding");
         System.out.println("defaultCharacterEncoding by property: " + defaultCharacterEncoding);
         System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
@@ -301,8 +329,12 @@ public class TestSSL {
     	    			longitude = Double.parseDouble(station[5].substring(0, station[5].length()-1));
     	    			latitude = Double.parseDouble(station[6].substring(0, station[6].length()-1));
     	    		}
+    	    		else {
+    	    			latitude = 0.0;
+    	    			longitude = 0.0;
+    	    		}
     	    		
-					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
+					addressForGoogle = getAddressForGoogle(address);
 
     				System.out.println(i+"[name<" + name 
     						+ ">address<" + address
@@ -310,7 +342,8 @@ public class TestSSL {
     						+ ">("+latitude+","+longitude+")"
     						+ "]");
     				
-    				if (i == 1) {
+    				if (latitude == 0.0 &&
+    						longitude == 0.0) {
 						getLatitudeLongitude(addressForGoogle);
 	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
 
@@ -329,7 +362,7 @@ public class TestSSL {
     			}
     		}
     		
-    		companyJson.put("Stations", stationArray);
+    		companyJson.put("stations", stationArray);
     			
     		//System.setProperty("file.encoding", "MS950");
     		//System.setProperty("file.encoding", "x-windows-950");
@@ -429,17 +462,7 @@ public class TestSSL {
 								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
 							}
 							
-							if (address.indexOf(ADDRESS_NUMBER) > 0) {
-								addressForGoogle = address.substring(address.indexOf(" ")+1, address.indexOf(ADDRESS_NUMBER)+1);
-							}
-							else if (address.indexOf(ADDRESS_NUMBER_DASH) > 0){
-								addressForGoogle = address.substring(address.indexOf(" ")+1, address.indexOf(ADDRESS_NUMBER_DASH));
-								
-							}
-							else {
-								addressForGoogle = address;
-								
-							}
+							addressForGoogle = getAddressForGoogle(address);
 							
 							System.out.println(i+"<"+address+">"+"<"+addressForGoogle+">");
 							
@@ -462,7 +485,7 @@ public class TestSSL {
 				
 			}
 			
-			companyJson.put("Stations", stationArray);
+			companyJson.put("stations", stationArray);
 
     		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\24TPS.json", companyJson);
 
@@ -500,6 +523,8 @@ public class TestSSL {
         final String ADDRESS_START = "<TD class=\"green-W9\">";
         final String ADDRESS_END = "</TD>";
         final String ADDRESS_NUMBER = "¸¹";
+        final String ADDRESS_NUMBER_DASH = "-";
+        final String ADDRESS_NUMBER_SPACE = " ";
         String address = "";
         String addressForGoogle = "";
         
@@ -547,17 +572,18 @@ public class TestSSL {
 						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
 					}
 					
-					addressForGoogle = address.substring(0, address.indexOf(ADDRESS_NUMBER)+1);
+					addressForGoogle = getAddressForGoogle(address);
+					
 					i++;
 
-					//System.out.println(i+"("+address+")");
-					//System.out.println(i+"("+addressForGoogle+")");
+					System.out.println(i+"("+address+")");
+					System.out.println(i+"("+addressForGoogle+")");
 					
-					if (i == 1) {
+					//if (i == 1) {
 						getLatitudeLongitude(addressForGoogle);
-	                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
+	                    System.out.println(i+"<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
 
-					}
+					//}
 					
 					addStationToArray(name, address, latitude, longitude);
 
@@ -565,7 +591,7 @@ public class TestSSL {
 				
 			}
 			
-    		companyJson.put("Stations", stationArray);
+    		companyJson.put("stations", stationArray);
 
     		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\TaiwanParking.json", companyJson);
 
@@ -586,10 +612,48 @@ public class TestSSL {
     }
 
     
-    static private void getStationsFromJson(String fileName)
-            throws JSONException {
+    static private void getStationsFromJson(String urlStr)
+            throws Exception, JSONException {
 
+    	//String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
+    	//String urlStr = "https://www.dropbox.com/s/53bz85d67t29n5s/24TPS.json?dl=0";
 
+    	final String STATIONS = "stations";
+    	final String NAME = "name";
+        final String ADDRESS = "address";
+        final String LATITUDE = "latitude";
+        final String LONGITUDE = "longitude";
+                
+        try {
+            String jsonStr = httpCall(urlStr);
+            System.out.println(jsonStr);
+
+            JSONObject stationsJson = new JSONObject(jsonStr);
+            JSONArray stationArray = stationsJson.getJSONArray(STATIONS);
+                        
+            for(int i = 0; i < stationArray.length(); i++) {
+            	JSONObject stationJson = stationArray.getJSONObject(i);
+
+                    //JSONArray addressArray = resultJson.getJSONArray(ADDRESS_COMPONENTS);
+
+                    //JSONObject geometryJson = resultJson.getJSONObject(GEOMETRY);
+                    //JSONObject locationCoord = geometryJson.getJSONObject(LOCATION);
+            	String name = stationJson.getString(NAME);
+            	String address = stationJson.getString(ADDRESS);
+            	double latitude = stationJson.getDouble(LATITUDE);
+            	double longitude = stationJson.getDouble(LONGITUDE);
+            		                    
+            	System.out.println((i+1)+"<"+name+"><"+address+">("+latitude+","+longitude+")");
+
+                    
+            } // i
+         
+            
+            
+        } catch (JSONException e) {
+            System.out.println(e.getMessage());
+
+        }
     }        
     
     
