@@ -85,10 +85,10 @@ public class TestSSL {
     } // End of main 
 
     
-    static private String httpCall(String address)
+    static private String httpCall(String urlStr)
             throws Exception {
     	
-    	String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
+    	//String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
     	
         System.out.println(urlStr);
 
@@ -126,8 +126,9 @@ public class TestSSL {
             throws Exception {
     	
     	
-    	
-        String jsonStr = httpCall(address);
+    	String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
+
+        String jsonStr = httpCall(urlStr);
         //System.out.println("jsonStr<"+jsonStr+">");
 
         getGeocodeFromJson(jsonStr);
@@ -135,7 +136,7 @@ public class TestSSL {
         while (status.equals("OVER_QUERY_LIMIT")) {
         	Thread.sleep (1000);
         	
-        	jsonStr = httpCall(address);
+        	jsonStr = httpCall(urlStr);
             getGeocodeFromJson(jsonStr);
         	
         }
@@ -583,10 +584,17 @@ public class TestSSL {
 		}
 
     }
+
+    
+    static private void getStationsFromJson(String fileName)
+            throws JSONException {
+
+
+    }        
     
     
     static private void getGeocodeFromJson(String jsonStr)
-            throws JSONException {
+    		throws JSONException {
 
         final String RESULTS = "results";
         final String ADDRESS_COMPONENTS = "address_components";
