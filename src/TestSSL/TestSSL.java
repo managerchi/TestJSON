@@ -77,12 +77,12 @@ public class TestSSL {
 
         
         
-		parseTaiwanParkingAddresses();
+//		parseTaiwanParkingAddresses();
 //		parseDoDoHomeAddresses();
 //		parse24TPSAddresses();
-//		parse24TPSAddressesCreditCards();
+		parse24TPSAddressesCreditCards();
 		
-		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/TaiwanParking.json");
+//		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/TaiwanParking.json");
 //		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/DoDoHome.json");
 //		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/24TPS.json");
 	            
@@ -278,7 +278,7 @@ public class TestSSL {
         System.out.println("defaultCharacterEncoding by code: " + getDefaultCharEncoding());
         System.out.println("defaultCharacterEncoding by charSet: " + Charset.defaultCharset());
 
-    	String csvFile = "E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.txt";
+    	String csvFile = "E:\\Users\\Chi\\Documents\\ParkingPlaces\\嘟嘟房停車網.所有場站明細.txt";
     	BufferedReader br = null;
     	String line = "";
     	String csvSplitBy = "\t";
@@ -298,7 +298,7 @@ public class TestSSL {
         //JSONObject stationJson = new JSONObject();
         //HashMap<String, Object> stationMap = new HashMap<String, Object>();
         
-        File file = new File("E:\\Users\\Chi\\Documents\\Parking\\嘟嘟房停車網.所有場站明細.txt");
+        File file = new File("E:\\Users\\Chi\\Documents\\ParkingPlaces\\嘟嘟房停車網.所有場站明細.txt");
         BufferedReader in = new BufferedReader(
         					new InputStreamReader(
         					new FileInputStream(file), "x-windows-950"));
@@ -384,7 +384,7 @@ public class TestSSL {
     		//System.setProperty("file.encoding", "x-windows-950");
     		//System.setProperty("file.encoding", "UTF-8");
     			  		
-    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\DoDoHome.json", companyJson);
+    		outputJSON("E:\\Users\\Chi\\Documents\\ParkingPlaces\\DoDoHome.json", companyJson);
     	        
     		
      
@@ -440,7 +440,7 @@ public class TestSSL {
  
 			String line;
  
-			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\永固便利停車.htm"));
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\ParkingPlaces\\永固便利停車.htm"));
  
 			while ((line = br.readLine()) != null) {
 				if (line.contains(TABLE_START)) {
@@ -478,6 +478,11 @@ public class TestSSL {
 								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
 							}
 							
+							if (address.length() > 0) {
+								address = address.substring(3);
+								
+							}
+							
 							addressForGoogle = getAddressForGoogle(address);
 							
 							System.out.println(i+"<"+address+">"+"<"+addressForGoogle+">");
@@ -503,7 +508,7 @@ public class TestSSL {
 			
 			companyJson.put("stations", stationArray);
 
-    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\24TPS.json", companyJson);
+    		outputJSON("E:\\Users\\Chi\\Documents\\ParkingPlaces\\24TPS.json", companyJson);
 
  
 		} catch (IOException e) {
@@ -554,7 +559,7 @@ public class TestSSL {
  
 			String line;
  
-			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\永固便利停車.信用卡.htm"));
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\ParkingPlaces\\永固便利停車.信用卡.htm"));
  
 			while ((line = br.readLine()) != null) {
 				if (line.contains(TABLE_START)) {
@@ -586,10 +591,10 @@ public class TestSSL {
 							addressForGoogle = "";
 							
 							if (line.contains(ADDRESS_END)) {
-								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length()+3, line.indexOf(ADDRESS_END));
 							}
 							else {
-								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length()+3);
 							}
 							
 							addressForGoogle = getAddressForGoogle(address);
@@ -617,7 +622,7 @@ public class TestSSL {
 			
 			companyJson.put("stations", stationArray);
 
-    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\24TPS.json", companyJson);
+    		outputJSON("E:\\Users\\Chi\\Documents\\ParkingPlaces\\24TPS.json", companyJson);
 
  
 		} catch (IOException e) {
@@ -678,7 +683,7 @@ public class TestSSL {
  
 			String line;
  
-			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\台灣聯通停車場開發股份有限公司.htm"));
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\ParkingPlaces\\台灣聯通停車場開發股份有限公司.htm"));
  
 			while ((line = br.readLine()) != null) {
 
@@ -757,7 +762,7 @@ public class TestSSL {
 			
     		companyJson.put("stations", stationArray);
 
-    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\TaiwanParking.json", companyJson);
+    		outputJSON("E:\\Users\\Chi\\Documents\\ParkingPlaces\\TaiwanParking.json", companyJson);
 
  
 		} catch (IOException e) {
