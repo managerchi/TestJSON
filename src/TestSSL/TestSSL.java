@@ -77,13 +77,14 @@ public class TestSSL {
 
         
         
-		//parseTaiwanParkingAddresses();
-		//parseDoDoHomeAddresses();
-		parse24TPSAddresses();
+		parseTaiwanParkingAddresses();
+//		parseDoDoHomeAddresses();
+//		parse24TPSAddresses();
+//		parse24TPSAddressesCreditCards();
 		
-		//getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/TaiwanParking.json");
-		//getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/DoDoHome.json");
-		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/24TPS.json");
+		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/TaiwanParking.json");
+//		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/DoDoHome.json");
+//		getStationsFromJson("https://dl.dropboxusercontent.com/u/46823822/24TPS.json");
 	            
 
     } // End of main 
@@ -94,7 +95,7 @@ public class TestSSL {
     	
     	//String urlStr = "https://maps.googleapis.com/maps/api/geocode/json?address="+address;
     	
-        System.out.println(urlStr);
+//        System.out.println(urlStr);
 
         //Thread.sleep (100);
     	
@@ -203,7 +204,8 @@ public class TestSSL {
     		
     		
     		//System.out.println("Successfully Copied JSON Object to File...");
-    		System.out.println("\nJSON Object: " + stations);
+//    		System.out.println("\nJSON Object: " + stations);
+    		
     		out.flush();
     		out.close();
     		
@@ -220,8 +222,6 @@ public class TestSSL {
     	} 
     	
      
-    	System.out.println("Done");
-
     }
 
     
@@ -229,6 +229,9 @@ public class TestSSL {
     	final String ADDRESS_NUMBER = "號";
         final String ADDRESS_NUMBER_OF = "之";
         final String ADDRESS_NUMBER_DASH = "-";
+        final String ADDRESS_NUMBER_AND = "與";
+        final String ADDRESS_NUMBER_CROSS2 = "交口";
+        final String ADDRESS_NUMBER_CROSS3 = "交叉口";
     	
     	String addressForGoogle =address.replaceAll("\\s","");
 
@@ -237,6 +240,17 @@ public class TestSSL {
 		}
 		else if (addressForGoogle.indexOf(ADDRESS_NUMBER_DASH) > 0) {
 			addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER_DASH));
+		}
+		else if (addressForGoogle.indexOf(ADDRESS_NUMBER_AND) > 0) {
+			if (addressForGoogle.indexOf(ADDRESS_NUMBER_CROSS2) > 0) {
+				addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER_AND)) +
+						"+" + addressForGoogle.substring(addressForGoogle.indexOf(ADDRESS_NUMBER_AND)+1, addressForGoogle.indexOf(ADDRESS_NUMBER_CROSS2));
+			} 
+			else if (addressForGoogle.indexOf(ADDRESS_NUMBER_CROSS3) > 0) {
+				addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER_AND)) +
+						"+" + addressForGoogle.substring(addressForGoogle.indexOf(ADDRESS_NUMBER_AND)+1, addressForGoogle.indexOf(ADDRESS_NUMBER_CROSS3));
+				
+			}
 		}
 		else if (addressForGoogle.indexOf(ADDRESS_NUMBER) > 0){
 			addressForGoogle = addressForGoogle.substring(0, addressForGoogle.indexOf(ADDRESS_NUMBER)+1);
@@ -322,8 +336,9 @@ public class TestSSL {
     	    				telephoneNumber = station[2].substring(1, station[2].length()-1);
     	    		}
     	    		
-    	    		comment = station[3].substring(1, station[3].length()-1);
-    	    		types = station[4].substring(1, station[4].length()-1);
+    	    		comment = station[3].substring(0, station[3].length()-1);
+    	    		types = station[4].substring(0, station[4].length()-1);
+    	    		System.out.println("臨停<" + types.indexOf("臨停") + ">");
     	    		
     	    		if (station.length == 7) {
     	    			longitude = Double.parseDouble(station[5].substring(0, station[5].length()-1));
@@ -357,8 +372,9 @@ public class TestSSL {
     		        
     		        //stationArray.put(stationMap);
 
-    		        addStationToArray(name, address, latitude, longitude);
-    				
+    				if (types.indexOf("臨停") >= 0) {
+    					addStationToArray(name, address, latitude, longitude);
+    				}
     			}
     		}
     		
@@ -510,6 +526,120 @@ public class TestSSL {
 
     
     
+    static private void parse24TPSAddressesCreditCards()
+            throws Exception {
+        
+        System.setProperty("file.encoding", "UTF-8");
+        
+        final String TABLE_START = "<TD>地　　址</TD></TR>";
+        
+        final String NAME_START = "<TD>";
+        final String NAME_END = "</TD>";
+        final String NAME_BEFORE = "<TD>";
+        String name = "";
+        
+        final String ADDRESS_START = "<TD>";
+        final String ADDRESS_END = "</TD>";
+        final String ADDRESS_NUMBER = "號";
+        final String ADDRESS_NUMBER_DASH = "之";
+        String address = "";
+        String addressForGoogle = "";
+        
+       
+		Integer i = 0;
+
+        BufferedReader br = null;
+        
+		try {
+ 
+			String line;
+ 
+			br = new BufferedReader(new FileReader("E:\\Users\\Chi\\Documents\\Parking\\永固便利停車.信用卡.htm"));
+ 
+			while ((line = br.readLine()) != null) {
+				if (line.contains(TABLE_START)) {
+					while ((line = br.readLine()) != null) {
+						if (line.contains(NAME_START)) {
+							//System.out.println(line);
+							//System.out.println(ADDRESS_START.length());
+							
+							if (line.contains(NAME_END)) {
+								name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length(), line.indexOf(NAME_END));
+							}
+							else {
+								name = line.substring(line.indexOf(NAME_BEFORE)+NAME_BEFORE.length());
+							}
+							
+							i++;
+							
+							System.out.println(i+"("+name+")");
+							
+							line = br.readLine();
+							
+						}
+						
+						if (line.contains(ADDRESS_START)) {
+							//System.out.println(line);
+							//System.out.println(ADDRESS_START.length());
+							
+							address = "";
+							addressForGoogle = "";
+							
+							if (line.contains(ADDRESS_END)) {
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+							}
+							else {
+								address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
+							}
+							
+							addressForGoogle = getAddressForGoogle(address);
+							
+							System.out.println(i+"<"+address+">"+"<"+addressForGoogle+">");
+							
+							//if (i % 2 == 1) {
+								getLatitudeLongitude(addressForGoogle);
+			                    System.out.println("<"+name+"><"+address+">"+"("+latitude+","+longitude+")");
+
+							//}
+							
+							addStationToArray(name, address, latitude, longitude);
+
+							line = br.readLine();
+						}
+						
+					}
+					
+					
+				}
+				
+				
+			}
+			
+			companyJson.put("stations", stationArray);
+
+    		outputJSON("E:\\Users\\Chi\\Documents\\Parking\\24TPS.json", companyJson);
+
+ 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null) {
+					br.close();
+					System.out.println(i);
+				}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+
+        
+
+        
+    }
+
+    
+    
     static private void parseTaiwanParkingAddresses()
                 throws Exception {
 
@@ -520,11 +650,17 @@ public class TestSSL {
         final String NAME_BEFORE = "\')\">";
         String name = "";
         
-        final String ADDRESS_START = "<TD class=\"green-W9\">";
+        final String ADDRESS_START = "class=\"green-W9\">";
         final String ADDRESS_END = "</TD>";
+        final String ADDRESS_BR = "<BR>";
         final String ADDRESS_NUMBER = "號";
         final String ADDRESS_NUMBER_DASH = "-";
         final String ADDRESS_NUMBER_SPACE = " ";
+        
+        final String DISCOUNT = "viewCCDiscount";
+        final String CREDIT_CARD = "指定信用卡";
+
+        
         String address = "";
         String addressForGoogle = "";
         
@@ -547,7 +683,7 @@ public class TestSSL {
 			while ((line = br.readLine()) != null) {
 
 				if (line.contains(NAME_START)) {
-					//System.out.println(line);
+//					System.out.println(line);
 					//System.out.println(ADDRESS_START.length());
 					
 					if (line.contains(NAME_END)) {
@@ -562,11 +698,14 @@ public class TestSSL {
 				}
 				
 				if (line.contains(ADDRESS_START)) {
-					//System.out.println(line);
-					//System.out.println(ADDRESS_START.length());
+//					System.out.println(line);
+//					System.out.println(line+"><"+ADDRESS_START.length());
 					
 					if (line.contains(ADDRESS_END)) {
 						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_END));
+					}
+					else if (line.contains(ADDRESS_BR)) {
+						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length(), line.indexOf(ADDRESS_BR) - 1);
 					}
 					else {
 						address = line.substring(line.indexOf(ADDRESS_START)+ADDRESS_START.length());
@@ -576,8 +715,8 @@ public class TestSSL {
 					
 					i++;
 
-					System.out.println(i+"("+address+")");
-					System.out.println(i+"("+addressForGoogle+")");
+//					System.out.println(i+"("+address+")");
+					System.out.println(i+"<"+address+"><"+addressForGoogle+">");
 					
 					//if (i == 1) {
 						getLatitudeLongitude(addressForGoogle);
@@ -585,10 +724,35 @@ public class TestSSL {
 
 					//}
 					
-					addStationToArray(name, address, latitude, longitude);
+					//addStationToArray(name, address, latitude, longitude);
+	                    
+	        			while ((line = br.readLine()) != null) {
+	        				if (line.contains(DISCOUNT)) {
+//	        					System.out.println(i+"<"+line+">");
+	        					
+	        					if (line.contains(CREDIT_CARD)) {
+//		        					System.out.println(i+"<"+line+">");
+
+	        						addStationToArray(name, address, latitude, longitude);
+	        					}
+	        					
+	        					break;
+	        				}
+	        				
+	        				
+	        			}
+
 
 				}
-				
+				/*
+				if (line.contains(DISCOUNT)) {
+					System.out.println(i+"<"+line+">");
+					
+					if (line.contains(CREDIT_CARD)) {
+						addStationToArray(name, address, latitude, longitude);
+					}
+				}
+				*/
 			}
 			
     		companyJson.put("stations", stationArray);
@@ -626,7 +790,7 @@ public class TestSSL {
                 
         try {
             String jsonStr = httpCall(urlStr);
-            System.out.println(jsonStr);
+//            System.out.println(jsonStr);
 
             JSONObject stationsJson = new JSONObject(jsonStr);
             JSONArray stationArray = stationsJson.getJSONArray(STATIONS);
@@ -718,9 +882,9 @@ public class TestSSL {
                     
                     
                     String formattedAddress = resultJson.getString(FORMATTED_ADDRESS);
-                    System.out.println("formattedAddress<"+formattedAddress+">");
+//                    System.out.println("formattedAddress<"+formattedAddress+">");
                     String placeID = resultJson.getString(PLACE_ID);
-                    System.out.println(placeID);
+//                    System.out.println(placeID);
 
                     JSONArray typesArray = resultJson.getJSONArray(TYPES);
                     
@@ -747,7 +911,7 @@ public class TestSSL {
                         for(int k = 0; k < typesArray.length(); k++) {
                         	type = typesArray.getString(k);
                         	
-                        	System.out.println(type);
+//                        	System.out.println(type);
                         } // k              
                     } // j
                 } // i
